@@ -1,0 +1,37 @@
+{
+  "name": "localzet/vpn",
+  "description": "VPN WireGuard Manager",
+  "type": "library",
+  "keywords": [
+    "localzet",
+    "VPN",
+    "WireGuard"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "authors": [
+    {
+      "role": "Developer",
+      "name": "Ivan Zorin",
+      "email": "creator@localzet.com",
+      "homepage": "https://github.com/localzet"
+    }
+  ],
+  "support": {
+    "email": "support@localzet.com",
+    "source": "https://github.com/localzet/VPN"
+  },
+  "autoload": {
+    "psr-4": {
+      "localzet\\": "src"
+    }
+  },
+  "require": {
+    "php": "^8.2",
+    "ext-mbstring": "*",
+    "phpseclib/phpseclib": "^3.0"
+  },
+  "suggest": {
+    "phpseclib/phpseclib": "For SSH Connect",
+    "bacon/bacon-qr-code": "For QR-Configuration"
+  }
+}
