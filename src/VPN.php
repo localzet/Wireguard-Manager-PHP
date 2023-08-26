@@ -2,7 +2,7 @@
 
 namespace localzet;
 
-use localzet\VPN\{Configuration, Crypto, Dependencies, Exec, Networking, Server};
+use localzet\VPN\{Configuration, Crypto, Dependencies, Exec, Networking, Server, ShadowSocks};
 
 /**
  *
@@ -14,5 +14,6 @@ class VPN
         Crypto,
         Networking,
         Configuration,
-        Server;
+        Server,
+        ShadowSocks;
 }

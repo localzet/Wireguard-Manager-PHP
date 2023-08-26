@@ -7,95 +7,97 @@ use Exception;
 trait Networking
 {
     /**
-     * Detect Interface
+     * Метод для определения сетевого интерфейса по умолчанию
      *
-     * @return string
-     * @throws Exception
+     * Использует команду `ip` для определения сетевого интерфейса по умолчанию
+     *
+     * @return string Имя сетевого интерфейса по умолчанию
+     *
+     * @throws Exception Если выполнение команды не удалось
      */
     public function detectInterface(): string
     {
-        return $this->exec("ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1") ?? 'eth0';
+        // Выполнение команды `ip` для определения сетевого интерфейса по умолчанию
+        return self::exec("ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1") ?? 'eth0';
     }
 
     /**
-     * IP Forwarding
+     * Метод для включения IP-переадресации
+     *
+     * Добавляет соответствующие параметры в файл /etc/sysctl.conf и применяет изменения
      *
      * @return void
-     * @throws Exception
+     *
+     * @throws Exception Если выполнение команд не удалось
      */
-    public function IPForwarding(): void
+    public static function IPForwarding(): void
     {
-        // IPv4
-        $this->exec('echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf');
+        // Включение IP-переадресации для IPv4
+        self::exec('echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf');
 
-        // IPv4: Default
-        $this->exec('echo "net.ipv4.conf.default.forwarding = 1" >> /etc/sysctl.conf');
-        $this->exec('echo "net.ipv4.conf.default.proxy_arp = 0" >> /etc/sysctl.conf');
-        $this->exec('echo "net.ipv4.conf.default.send_redirects = 1" >> /etc/sysctl.conf');
+        // Настройка параметров IPv4 по умолчанию
+        self::exec('echo "net.ipv4.conf.default.forwarding = 1" >> /etc/sysctl.conf');
+        self::exec('echo "net.ipv4.conf.default.proxy_arp = 0" >> /etc/sysctl.conf');
+        self::exec('echo "net.ipv4.conf.default.send_redirects = 1" >> /etc/sysctl.conf');
 
-        // IPv4: All
-        $this->exec('echo "net.ipv4.conf.all.forwarding = 1" >> /etc/sysctl.conf');
-        $this->exec('echo "net.ipv4.conf.all.rp_filter = 1" >> /etc/sysctl.conf');
-        $this->exec('echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.conf');
+        // Настройка параметров IPv4 для всех интерфейсов
+        self::exec('echo "net.ipv4.conf.all.forwarding = 1" >> /etc/sysctl.conf');
+        self::exec('echo "net.ipv4.conf.all.rp_filter = 1" >> /etc/sysctl.conf');
+        self::exec('echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.conf');
 
-        // IPv6
-//        $this->exec('echo "net.ipv6.ip_forward = 1" >> /etc/sysctl.conf');
-
-        // IPv6: Default
-//        $this->exec('echo "net.ipv6.conf.default.forwarding = 1" >> /etc/sysctl.conf');
-
-        // IPv6: All
-//        $this->exec('echo "net.ipv6.conf.all.forwarding = 1" >> /etc/sysctl.conf');
-
-        $this->exec('sysctl -p');
+        // Применение изменений
+        self::exec('sysctl -p');
     }
 
     /**
-     * IP Tables
+     * Метод для создания правил межсетевого экрана iptables
      *
-     * @param string $IPv4 10.66.66.1
-     * @param int|string $port
-     * @param string $Interface
-     * @param string $WireGuard
-     * @return array
+     * Создает правила для добавления и удаления маскарадинга и переадресации трафика через интерфейс WireGuard
+     *
+     * @param string $IPv4 IP-адрес сервера
+     * @param int|string $port Порт сервера для прослушивания
+     * @param string $Interface Интерфейс для настройки правил межсетевого экрана
+     * @param string $WireGuard Имя интерфейса WireGuard
+     *
+     * @return array Массив с правилами для добавления и удаления
      */
-    public function IPTables(
+    public static function IPTables(
         string     $IPv4,
         int|string $port,
         string     $Interface,
         string     $WireGuard
     ): array
     {
+        // Создание правил для добавления маскарадинга и переадресации трафика через интерфейс WireGuard
         $add = [
+            // Добавление маскарадинга для трафика из подсети сервера через указанный интерфейс
             "iptables -t nat -A POSTROUTING -s $IPv4/24 -o $Interface -j MASQUERADE;",
-//            "ip6tables -t nat -A POSTROUTING -s $IPv6/64 -o $Interface -j MASQUERADE;",
 
+            // Разрешение входящего трафика на указанный порт UDP
             "iptables -A INPUT -p udp -m udp --dport $port -j ACCEPT;",
 
+            // Разрешение трафика через интерфейс WireGuard в обоих направлениях
             "iptables -A FORWARD -i $WireGuard -j ACCEPT;",
-//            "ip6tables -A FORWARD -i $WireGuard -j ACCEPT;",
-
-            "iptables -A FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
-//            "ip6tables -A FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
-
             "iptables -A FORWARD -o $WireGuard -j ACCEPT;",
-//            "ip6tables -A FORWARD -o $WireGuard -j ACCEPT;",
+
+            // Разрешение трафика между указанным интерфейсом и интерфейсом WireGuard
+            "iptables -A FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
         ];
 
+        // Создание правил для удаления маскарадинга и переадресации трафика через интерфейс WireGuard
         $del = [
+            // Удаление маскарадинга для трафика из подсети сервера через указанный интерфейс
             "iptables -t nat -D POSTROUTING -s $IPv4/24 -o $Interface -j MASQUERADE;",
-//            "ip6tables -t nat -D POSTROUTING -s $IPv6/64 -o $Interface -j MASQUERADE;",
 
+            // Запрет входящего трафика на указанный порт UDP
             "iptables -D INPUT -p udp -m udp --dport $port -j ACCEPT;",
 
+            // Запрет трафика через интерфейс WireGuard в обоих направлениях
             "iptables -D FORWARD -i $WireGuard -j ACCEPT;",
-//            "ip6tables -D FORWARD -i $WireGuard -j ACCEPT;",
-
-            "iptables -D FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
-//            "ip6tables -D FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
-
             "iptables -D FORWARD -o $WireGuard -j ACCEPT;",
-//            "ip6tables -D FORWARD -o $WireGuard -j ACCEPT;",
+
+            // Запрет трафика между указанным интерфейсом и интерфейсом WireGuard
+            "iptables -D FORWARD -i $Interface -o $WireGuard -j ACCEPT;",
         ];
 
         return [
@@ -104,33 +106,47 @@ trait Networking
         ];
     }
 
+
     /**
-     * @param string $IPv4 10.66.66.1
-     * @param string $WireGuard
+     * Метод для добавления маршрута
+     *
+     * Добавляет маршрут для IP-адреса через интерфейс WireGuard
+     *
+     * @param string $IPv4 IP-адрес для добавления маршрута
+     * @param string $WireGuard Имя интерфейса WireGuard
+     *
      * @return void
-     * @throws Exception
+     *
+     * @throws Exception Если выполнение команды не удалось
      */
-    public function addRoute(
+    public static function addRoute(
         string $IPv4,
         string $WireGuard
     ): void
     {
-        $this->exec("ip -4 route add $IPv4/32 dev $WireGuard");
-//        $this->exec("ip -6 route add $IPv6/128 dev $WireGuard");
+        // Добавление маршрута для IPv4-адреса через интерфейс WireGuard
+        self::exec("ip -4 route add $IPv4/32 dev $WireGuard");
     }
 
     /**
-     * @param string $IPv4 10.66.66.1
-     * @param string $WireGuard
+     * Метод для удаления маршрута
+     *
+     * Удаляет маршрут для IP-адреса через интерфейс WireGuard
+     *
+     * @param string $IPv4 IP-адрес для удаления маршрута
+     * @param string $WireGuard Имя интерфейса WireGuard
+     *
      * @return void
-     * @throws Exception
+     *
+     * @throws Exception Если выполнение команды не удалось
      */
-    public function delRoute(
+    public static function delRoute(
         string $IPv4,
         string $WireGuard
     ): void
     {
-        $this->exec("ip -4 route del $IPv4/32 dev $WireGuard");
-//        $this->exec("ip -6 route del $IPv6/128 dev $WireGuard");
+        // Удаление маршрута для IPv4-адреса через интерфейс WireGuard
+        self::exec("ip -4 route del $IPv4/32 dev $WireGuard");
     }
+
 }

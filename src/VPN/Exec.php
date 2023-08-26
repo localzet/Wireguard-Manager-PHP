@@ -13,25 +13,31 @@ use phpseclib3\Net\SSH2;
 trait Exec
 {
     /**
-     * @var array|null
+     * @var array|null Конфигурация SSH
      */
-    private ?array $ssh_config = null;
+    protected static ?array $ssh_config = null;
 
     /**
-     * @var SSH2|null
+     * @var SSH2|null Экземпляр SSH2 для подключения к удаленному серверу
      */
-    private ?SSH2 $ssh = null;
+    private static ?SSH2 $ssh = null;
 
     /**
-     * @param string $exec
-     * @return string
-     * @throws Exception
+     * Метод для выполнения команды в терминале
+     *
+     * @param string $exec Команда для выполнения
+     *
+     * @return string Результат выполнения команды
+     *
+     * @throws Exception Если выполнение команды не удалось
      */
-    private function exec(string $exec): string
+    protected static function exec(string $exec): string
     {
-        if ($this->ssh()) {
-            $output = $this->ssh()->exec($exec);
+        if (self::ssh()) {
+            // Выполнение команды через SSH
+            $output = self::ssh()->exec($exec);
         } else {
+            // Выполнение команды локально
             $output = exec($exec, $output, $result_code);
             if ($result_code) {
                 $output = implode("\n", $output);
@@ -39,40 +45,43 @@ trait Exec
             }
         }
 
-        // Преобразование кодировки вывода
-//        $output = mb_convert_encoding($output, "ISO-8859-1", "UTF-8");
-
         // Замена символа новой строки на пробел
         return str_replace("\n", " ", $output);
     }
 
     /**
-     * @return SSH2|null
-     * @throws InvalidArgumentException
-     * @throws Exception
+     * Метод для получения экземпляра SSH2 для подключения к удаленному серверу
+     *
+     * @return SSH2|null Экземпляр SSH2 или null, если подключение не удалось
+     *
+     * @throws InvalidArgumentException Если конфигурация SSH недостаточна
+     * @throws Exception Если авторизация не удалась
      */
-    private function ssh(): ?SSH2
+    protected static function ssh(): ?SSH2
     {
-        if (class_exists('\phpseclib3\Net\SSH2') && $this->ssh_config) {
-            if (!$this->ssh) {
+        if (class_exists('\phpseclib3\Net\SSH2') && self::$ssh_config) {
+            if (!self::$ssh) {
+                // Проверка наличия необходимых параметров конфигурации SSH
                 if (
-                    !isset($this->ssh_config["ip"]) ||
-                    !isset($this->ssh_config["port"]) ||
-                    !isset($this->ssh_config["user"]) ||
-                    !isset($this->ssh_config["privatekey"])
+                    !isset(self::$ssh_config["ip"]) ||
+                    !isset(self::$ssh_config["port"]) ||
+                    !isset(self::$ssh_config["user"]) ||
+                    !isset(self::$ssh_config["privatekey"])
                 ) {
                     throw new InvalidArgumentException("Недостаточно параметров Exec");
                 }
 
-                $ssh = new SSH2($this->ssh_config["ip"], $this->ssh_config["port"]);
-                $key = PublicKeyLoader::load(file_get_contents($this->ssh_config["privatekey"]));
+                // Создание экземпляра SSH2 и подключение к удаленному серверу
+                $ssh = new SSH2(self::$ssh_config["ip"], self::$ssh_config["port"]);
+                $key = PublicKeyLoader::load(file_get_contents(self::$ssh_config["privatekey"]));
 
-                if (!$ssh->login($this->ssh_config["user"], $key)) {
+                // Авторизация на удаленном сервере с использованием закрытого ключа
+                if (!$ssh->login(self::$ssh_config["user"], $key)) {
                     throw new Exception('Ошибка авторизации');
                 }
 
                 return $ssh;
-            } else return $this->ssh;
+            } else return self::$ssh;
         }
         return null;
     }
