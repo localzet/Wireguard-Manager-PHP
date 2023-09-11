@@ -118,10 +118,12 @@ trait Wg
         int          $ListenPort,
         string       $PrivateKey,
         array        $Peers,
+        ?string      $Endpoint = null,
+        ?int         $PersistentKeepalive = null,
     ): false|int
     {
         // Форматируем конфигурацию сервера
-        $data = self::format_server_config($WireGuard, $Address, $ListenPort, $PrivateKey, $Peers);
+        $data = self::format_server_config($WireGuard, $Address, $ListenPort, $PrivateKey, $Peers, $Endpoint, $PersistentKeepalive);
         // Записываем конфигурацию в файл и возвращаем результат
         return self::wg_put_config($WireGuard, $data);
     }
