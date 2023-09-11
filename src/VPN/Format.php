@@ -48,6 +48,7 @@ trait Format
         $Configuration .= "PostUp = iptables -A FORWARD -i $WireGuard -j ACCEPT\n";
         $Configuration .= "PostUp = iptables -A FORWARD -o $WireGuard -j ACCEPT\n";
         $Configuration .= "PostUp = iptables -A FORWARD -i `ip route | awk '/default/ {print $5; exit}'` -o $WireGuard -j ACCEPT\n";
+        $Configuration .= "PostUp = ip rule add from `ip addr show $(ip route | awk '/default/ { print $5 }') | grep \"inet\" | grep -v \"inet6\" | head -n 1 | awk '/inet/ {print $2}' | awk -F/ '{print $1}'` table main\n";
 
         // Добавляем post-down скрипты для удаления правил iptables, добавленных post-up скриптами
         // Эти скрипты выполняются перед опусканием интерфейса
@@ -57,6 +58,7 @@ trait Format
         $Configuration .= "PostDown = iptables -D FORWARD -i $WireGuard -j ACCEPT\n";
         $Configuration .= "PostDown = iptables -D FORWARD -o $WireGuard -j ACCEPT\n";
         $Configuration .= "PostDown = iptables -D FORWARD -i `ip route | awk '/default/ {print $5; exit}'` -o $WireGuard -j ACCEPT\n";
+        $Configuration .= "PostDown = ip rule del from `ip addr show $(ip route | awk '/default/ { print $5 }') | grep \"inet\" | grep -v \"inet6\" | head -n 1 | awk '/inet/ {print $2}' | awk -F/ '{print $1}'` table main\n";
 
         // Добавляем информацию о каждом пире
         foreach ($Peers as $Peer) {
