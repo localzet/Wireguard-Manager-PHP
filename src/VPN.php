@@ -2,18 +2,16 @@
 
 namespace localzet;
 
-use localzet\VPN\{Configuration, Crypto, Dependencies, Exec, Networking, Server, ShadowSocks};
+use localzet\VPN\{Format, Generate, Linux, ShadowSocks, Wg};
 
 /**
  *
  */
 class VPN
 {
-    use Exec,
-        Dependencies,
-        Crypto,
-        Networking,
-        Configuration,
-        Server,
+    use Generate,
+        Linux,
+        Format,
+        Wg,
         ShadowSocks;
 }
