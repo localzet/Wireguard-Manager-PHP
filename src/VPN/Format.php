@@ -67,7 +67,7 @@ trait Format
             $Configuration .= "[Peer]\n";
             $Configuration .= "PublicKey = {$Peer['PublicKey']}\n";
             if (isset($Peer['Address'])) {
-                $Configuration .= "AllowedIPs = " . (is_array($Peer['Address']) ? implode(', ', $Peers['Address']) : $Peer['Address']) . "\n";
+                $Configuration .= "AllowedIPs = " . (is_array($Peer['Address']) ? implode(', ', $Peer['Address']) : $Peer['Address']) . "\n";
             }
             if (isset($Peer['Endpoint']) || $Endpoint) {
                 $Configuration .= "Endpoint = " . ($Peer['Endpoint'] ?? $Endpoint) . "\n";
