@@ -132,9 +132,7 @@ trait Format
             // Публичный ключ пира
             $Configuration .= "PublicKey = {$Peer['PublicKey']}\n";
             // Разрешенные IP-адреса для пира
-//            if (isset($Peer['AllowedIPs'])) {
-                $Configuration .= "AllowedIPs = " . (is_array($Peer['AllowedIPs']) ? implode(', ', $Peer['AllowedIPs']) : $Peer['AllowedIPs']) ?? '0.0.0.0/1, 128.0.0.0/1' . "\n";
-//            }
+            $Configuration .= "AllowedIPs = " . (@$Peer['AllowedIPs'] ? (is_array($Peer['AllowedIPs']) ? implode(', ', $Peer['AllowedIPs']) : $Peer['AllowedIPs']) : '0.0.0.0/1, 128.0.0.0/1') . "\n";
             // Конечная точка для подключения к пиру
             if (isset($Peer['Endpoint']) || $Endpoint) {
                 $Configuration .= "Endpoint = " . ($Peer['Endpoint'] ?? $Endpoint) . "\n";
