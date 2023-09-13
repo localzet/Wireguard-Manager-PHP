@@ -26,8 +26,6 @@ trait Format
         int          $ListenPort,
         string       $PrivateKey,
         array        $Peers,
-        ?string      $Endpoint = null,
-        ?int         $PersistentKeepalive = null,
     ): string
     {
         // Начинаем формирование конфигурации
@@ -71,14 +69,8 @@ trait Format
             if (isset($Peer['Address'])) {
                 $Configuration .= "AllowedIPs = " . (is_array($Peer['Address']) ? implode(', ', $Peer['Address']) : $Peer['Address']) . "\n";
             }
-            if (isset($Peer['Endpoint']) || $Endpoint) {
-                $Configuration .= "Endpoint = " . ($Peer['Endpoint'] ?? $Endpoint) . "\n";
-            }
             if (isset($Peer['PresharedKey'])) {
                 $Configuration .= "PresharedKey = {$Peer['PresharedKey']}\n";
-            }
-            if (isset($Peer['PersistentKeepalive']) || $PersistentKeepalive) {
-                $Configuration .= "PersistentKeepalive = " . ($Peer['PersistentKeepalive'] ?? $PersistentKeepalive) . "\n";
             }
         }
 
