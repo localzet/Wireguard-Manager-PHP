@@ -1,5 +1,5 @@
 {
-  "name": "localzet/vpn",
+  "name": "localzet/wgmgr",
   "description": "VPN WireGuard Manager",
   "type": "library",
   "keywords": [
@@ -18,7 +18,8 @@
   ],
   "support": {
     "email": "support@localzet.com",
-    "source": "https://github.com/localzet/VPN"
+    "issues": "https://github.com/localzet/WG-Manager/issues",
+    "source": "https://github.com/localzet/WG-Manager"
   },
   "autoload": {
     "psr-4": {
